@@ -1,0 +1,292 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+
+struct Book {
+    std::string title;
+    std::string author;
+    int year;
+};
+
+// Функция для создания и заполнения файла данными о книгах
+void createAndFillFile() {
+    std::ofstream file("books.txt");
+    
+    if (file.is_open()) {
+        std::cout << "Введите данные о книгах (название, автор, год выпуска).\n";
+        std::cout << "Для завершения введите пустую строку в качестве названия книги.\n";
+        
+        std::vector<Book> books;
+        std::string title, author;
+        int year;
+        
+        while (true) {
+            std::cout << "Введите название книги: ";
+            std::getline(std::cin, title);
+            
+            if (title.empty()) {
+                break;
+            }
+            
+            std::cout << "Введите автора книги: ";
+            std::getline(std::cin, author);
+            
+            std::cout << "Введите год выпуска книги: ";
+            std::cin >> year;
+            std::cin.ignore();  // Очистка буфера ввода
+            
+            books.push_back({title, author, year});
+        }
+        
+        for (const auto& book : books) {
+            file << book.title << ',' << book.author << ',' << book.year << '\n';
+        }
+        
+        file.close();
+        std::cout << "Файл успешно создан и заполнен данными.\n";
+    } else {
+        std::cout << "Не удалось открыть файл.\n";
+    }
+}
+
+// Функция для поиска книги по названию
+void searchByTitle(const std::string& title) {
+    std::ifstream file("books.txt");
+    
+    if (file.is_open()) {
+        std::string line;
+        bool found = false;
+        
+        while (std::getline(file, line)) {
+            std::string bookTitle, author;
+            int year;
+            
+            // Разделение строки на название, автора и год выпуска
+            size_t pos = line.find(',');
+            bookTitle = line.substr(0, pos);
+            line.erase(0, pos + 1);
+            
+            pos = line.find(',');
+            author = line.substr(0, pos);
+            line.erase(0, pos + 1);
+            
+            year = std::stoi(line);
+            
+            if (bookTitle == title) {
+                std::cout << "Найдена книга:\n";
+                std::cout << "Название: " << bookTitle << '\n';
+                std::cout << "Автор: " << author << '\n';
+                std::cout << "Год выпуска: " << year << '\n';
+                
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            std::cout << "Книга с таким названием не найдена.\n";
+        }
+        
+        file.close();
+    } else {
+        std::cout << "Не удалось открыть файл.\n";
+    }
+}
+
+// Функция для сортировки книг в файле по автору или году выпуска
+void sortBooks(const std::string& sortBy) {
+    std::ifstream file("books.txt");
+    
+    if (file.is_open()) {
+        std::string line;
+        std::vector<Book> books;
+        
+        while (std::getline(file, line)) {
+            std::string title, author;
+            int year;
+            
+            // Разделение строки на название, автора и год выпуска
+            size_t pos = line.find(',');
+            title = line.substr(0, pos);
+            line.erase(0, pos + 1);
+            
+            pos = line.find(',');
+            author = line.substr(0, pos);
+            line.erase(0, pos + 1);
+            
+            year = std::stoi(line);
+            
+            books.push_back({title, author, year});
+        }
+        
+        std::sort(books.begin(), books.end(), [sortBy](const Book& a, const Book& b) {
+            if (sortBy == "author") {
+                return a.author < b.author;
+            } else if (sortBy == "year") {
+                return a.year < b.year;
+            }
+            return false;
+        });
+        
+        file.close();
+        
+        std::ofstream outputFile("output.txt");
+        if (outputFile.is_open()) {
+            for (const auto& book : books) {
+                outputFile << book.title << ',' << book.author << ',' << book.year << '\n';
+            }
+            
+            outputFile.close();
+            std::cout << "Книги успешно отсортированы и сохранены в файле 'output.txt'.\n";
+        } else {
+            std::cout << "Не удалось создать файл 'output.txt'.\n";
+        }
+    } else {
+        std::cout << "Не удалось открыть файл.\n";
+    }
+}
+
+// Функция для добавления новой книги в файл
+void addBook() {
+    std::ofstream file("books.txt", std::ios::app);
+    
+    if (file.is_open()) {
+        std::cout << "Введите информацию о новой книге.\n";
+        
+        std::string title, author;
+        int year;
+        
+        std::cout << "Введите название книги: ";
+        std::getline(std::cin, title);
+        
+        std::cout << "Введите автора книги: ";
+        std::getline(std::cin, author);
+        
+        std::cout << "Введите год выпуска книги: ";
+        std::cin >> year;
+        std::cin.ignore();  // Очистка буфера ввода
+        
+        file << title << ',' << author << ',' << year << '\n';
+        
+        file.close();
+        std::cout << "Новая книга успешно добавлена в файл.\n";
+    } else {
+        std::cout << "Не удалось открыть файл.\n";
+    }
+}
+
+// Функция для вывода определенных данных по запросу пользователя
+void queryData() {
+    std::cout << "Введите год выпуска книг, который не позднее введенного значения: ";
+    int year;
+    std::cin >> year;
+    std::cin.ignore();  // Очистка буфера ввода
+    
+    std::ifstream file("books.txt");
+    
+    if (file.is_open()) {
+        std::string line;
+        
+        while (std::getline(file, line)) {
+            std::string title, author;
+            int bookYear;
+            
+            // Разделение строки на название, автора и год выпуска
+            size_t pos = line.find(',');
+            title = line.substr(0 ,pos);
+            line.erase(0, pos + 1);
+            
+            pos = line.find(',');
+            author = line.substr(0, pos);
+            line.erase(0, pos + 1);
+            
+            bookYear = std::stoi(line);
+            
+            if (bookYear <= year) {
+                std::cout << "Название: " << title << '\n';
+                std::cout << "Автор: " << author << '\n';
+                std::cout << "Год выпуска: " << bookYear << "\n\n";
+            }
+        }
+        
+        file.close();
+    } else {
+        std::cout << "Не удалось открыть файл.\n";
+    }
+}
+
+int main() {
+    int choice;
+    
+    while (true) {
+        std::cout << "Меню:\n";
+        std::cout << "1. Создать и заполнить файл данными о книгах\n";
+        std::cout << "2. Найти книгу по названию\n";
+        std::cout << "3. Сортировать книги в файле\n";
+        std::cout << "4. Добавить книгу в файл\n";
+        std::cout << "5. Вывести определенные данные по запросу\n";
+        std::cout << "6. Выйти\n";
+        std::cout << "Выберите команду: ";
+        std::cin >> choice;
+        std::cin.ignore();  // Очистка буфера ввода
+        
+        std::ofstream outputFile("output.txt", std::ios::app);
+        
+        switch (choice) {
+            case 1:
+                createAndFillFile();
+                if (outputFile.is_open()) {
+                    outputFile << "Создан и заполнен файл данными о книгах.\n";
+                    outputFile.close();
+                }
+                break;
+            case 2:
+                std::cout << "Введите название книги для поиска: ";
+                std::string title;
+                std::getline(std::cin, title);
+                searchByTitle(title);
+                if (outputFile.is_open()) {
+                    outputFile << "Поиск книги по названию: " << title << '\n';
+                    outputFile.close();
+                }
+                break;
+            case 3:
+                std::cout << "Выберите опцию сортировки (author - по автору, year - по году выпуска): ";
+                std::string sortBy;
+                std::getline(std::cin, sortBy);
+                sortBooks(sortBy);
+                if (outputFile.is_open()) {
+                    outputFile << "Сортировка книг по " << sortBy << '\n';
+                    outputFile.close();
+                }
+                break;
+            case 4:
+                addBook();
+                if (outputFile.is_open()) {
+                    outputFile << "Добавлена новая книга в файл.\n";
+                    outputFile.close();
+                }
+                break;
+            case 5:
+                queryData();
+                if (outputFile.is_open()) {
+                    outputFile << "Вывод определенных данных по запросу.\n";
+                    outputFile.close();
+                }
+                break;
+            case 6:
+                std::cout << "До свидания!\n";
+                if (outputFile.is_open()) {
+                    outputFile << "Программа завершена.\n";
+                    outputFile.close();
+                }
+                return 0;
+            default:
+                std::cout << "Неверная команда. Попробуйте снова.\n";
+                break;
+        }
+        
+        std::cout << '\n';
+    }
+}
